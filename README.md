@@ -31,9 +31,11 @@ cd iosxr-appdev-vbox
 ./wrl7vbox.sh -name AppDev-WRL7 -iso <path-to-iso>/wrlinux-image-installer-intel-x86-64-20160411171331.iso
 ```
 
-# Using the AppDev-WRL7 Native Build VM, given the box file
+# Using the AppDev-WRL7 Native Build VM, given the box image
 
-## Initialize Vagrant VM
+Users of AppDev-WRL7 Native Build VM have multiple ways available to them. One can build the box as described in previous section and use that box. Or one can down the box from Cisco artifactory location -  http://engci-maven-master.cisco.com/artifactory/simple/appdevci-release/AppDev-WRL7/1.0/AppDev-WRL7.box. Or one can just use the box available at Atlas - https://atlas.hashicorp.com/ciscoxr/boxes/appdev-xr6.1.1
+
+## Initialize a New Vagrant VM (If using your own box image)
 
 The following will create a brand new Vagrantfile. This approach is recommended if you want to create your own Vagrantfile.
 
@@ -41,22 +43,6 @@ The following will create a brand new Vagrantfile. This approach is recommended 
 vagrant init "AppDev-WRL7"
 ```
 
-## Sharing host directory into AppDev WRL7 Vagrant Box VM
-
-A Vagrantfile is packaged as part of the box image. However the packaged Vagrantfile does not allow sharing a host directory as AppDev WRL7 Vagrant Box VM does not support native virtualbox sync folder functionality. Users can , however, share a host directory (e.g., ./share/ into the VM as /home/vagrant/host_share/ directory) by adding the following lines to a Vagrantfile that is created when they execute vagrant init command above. The lines below use an alternative method based on rsync.
-
-```
-  config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.synced_folder "./share/", "/home/vagrant/host_share", type: "rsync",
-    rsync__exclude: ".git/",
-    rsync__args: ["--verbose", "--rsync-path='sudo rsync'", "--archive", "--delete", "-z"]
-```
-
-Make ./share/ directory in current directory before connecting to the VM. 
-
-```
-mkdir -p ./share
-```
 
 ## Create AppDev WRL7 Vagrant Box using the Box image built in Build section
 
@@ -72,11 +58,29 @@ vagrant box list             # first list existing boxes
 vagrant box add --name "AppDev-WRL7" http://engci-maven-master.cisco.com/artifactory/simple/appdevci-release/AppDev-WRL7/1.0/AppDev-WRL7.box
 ```
 
+## Use Atlas AppDev-WRL7 Native Build VM vbox
 
 Users can also use AppDev-WRL7 Native Build VM vbox as available on Atlas. In this case just do the following and the box is automatically downloaded
 
 ```
 vagrant init ciscoxr/appdev-xr6.1.1
+```
+
+## Customize Vagrantfile such as sharing host directory into AppDev WRL7 Vagrant Box VM
+
+A Vagrantfile is packaged as part of the box image. However the packaged Vagrantfile does not allow sharing a host directory as AppDev WRL7 Vagrant Box VM does not support native virtualbox sync folder functionality. Users can , however, share a host directory (e.g., ./share/ into the VM as /home/vagrant/host_share/ directory) by adding the following lines to a Vagrantfile that is created when they execute vagrant init command above. The lines below use an alternative method based on rsync.
+
+```
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder "./share/", "/home/vagrant/host_share", type: "rsync",
+    rsync__exclude: ".git/",
+    rsync__args: ["--verbose", "--rsync-path='sudo rsync'", "--archive", "--delete", "-z"]
+```
+
+Make ./share/ directory in current directory before connecting to the VM. 
+
+```
+mkdir -p ./share
 ```
 
 
@@ -116,7 +120,7 @@ git clone -b collectd-5.5 https://github.com/collectd/collectd.git
 # Cisco CollectD changes
 # E.g., change dependency package lex to flex in build.sh since AppDev VM
 # does not contain lex, flex provides equivalent functionality
-git clone https://github.com/ios-xr/collectd-wrl7.git
+git clone https://github.com/ios-xr/iosxr-collectd.git
 
 # Apply Cisco changes
 cp collectd-wrl7/build.sh collectd/.
