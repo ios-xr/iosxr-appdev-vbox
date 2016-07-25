@@ -36,6 +36,12 @@ def exit_with_usage():
     print(globals()['__doc__'])
     os._exit(1)
 
+def run_command(s, line):
+    """Send the given line to s, wait for prompt, and print the response."""
+    s.sendline(line)   # run a command
+    s.prompt()         # match the prompt
+    print(s.before)    # print everything before the prompt.
+
 #
 # Main routine that parses the parameters and runs expect SSH session
 #
@@ -91,77 +97,44 @@ def main():
         #
         # First cleanup vagrant user
         #
-        s.sendline('userdel vagrant')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('rm -rf /home/vagrant')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('rm -rf /etc/profile.d')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
+        run_command(s, 'userdel vagrant')
+        run_command(s, 'rm -rf /home/vagrant')
+        run_command(s, 'rm -rf /etc/profile.d')
 
         #
         # Create vagrant user and their environment
         #
-        s.sendline('useradd -s /bin/bash -G sudo vagrant')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('echo vagrant:vagrant | chpasswd')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('mkdir -p /etc/profile.d')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('cat >/etc/profile.d/appdev.profile <<\'EOF\' \nBASE_PATH="/usr/local/bin:/usr/bin:/bin"\nif [ "$USER" = "vagrant" ]; then\n    export PATH="${BASE_PATH}:/usr/local/sbin:/usr/sbin:/sbin"\nfi\nEOF')   # run a command 
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('echo \'vagrant ALL=(ALL) NOPASSWD: ALL\' >> /etc/sudoers')   # run a command
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-#        s.sendline('cat >>visudo <<EOF \nvagrant ALL=(ALL) NOPASSWD: ALL\nEOF')   # run a command
-#        s.prompt()             # match the prompt
-#        print(s.before)        # print everything before the prompt.
+        run_command(s, 'useradd -s /bin/bash -G sudo vagrant')
+        run_command(s, 'echo vagrant:vagrant | chpasswd')
+        run_command(s, 'mkdir -p /etc/profile.d')
+        run_command(s, 'cat >/etc/profile.d/appdev.profile <<\'EOF\' \n'
+                       'BASE_PATH="/usr/local/bin:/usr/bin:/bin"\n'
+                       'if [ "$USER" = "vagrant" ]; then\n'
+                       'export PATH="${BASE_PATH}:/usr/local/sbin:/usr/sbin:/sbin"\n'
+                       'fi\n'
+                       'EOF')
+        run_command(s, 'echo \'vagrant ALL=(ALL) NOPASSWD: ALL\' >> /etc/sudoers')
+#       run_command(s, 'cat >>visudo <<EOF \nvagrant ALL=(ALL) NOPASSWD: ALL\nEOF')
 
         # Add public (rather than private key), so users can ssh without a password
         #https://github.com/purpleidea/vagrant-builder/blob/master/v6/files/ssh.sh
-        s.sendline('mkdir -p /home/vagrant/.ssh')
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('chmod 700 /home/vagrant/.ssh')
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('echo \'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key\' > /home/vagrant/.ssh/authorized_keys')
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('chmod 600 /home/vagrant/.ssh/authorized_keys')
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('chown -R vagrant:vagrant /home/vagrant/.ssh')
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
+        run_command(s, 'mkdir -p /home/vagrant/.ssh')
+        run_command(s, 'chmod 700 /home/vagrant/.ssh')
+        run_command(s, 'echo \'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key\' > /home/vagrant/.ssh/authorized_keys')
+        run_command(s, 'chmod 600 /home/vagrant/.ssh/authorized_keys')
+        run_command(s, 'chown -R vagrant:vagrant /home/vagrant/.ssh')
 
         #
         # Setup XR repository in the VM
         #
-        s.sendline('cat >/etc/yum/repos.d/IOSXR.repo <<\'EOF\' \n[IOSXR.repo]\nname=IOS XR Repository\nbaseurl=https://devhub.cisco.com/artifactory/xr600/3rdparty/x86_64/\nenabled=1\ngpgcheck=0\nEOF')      # run a command 
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
-
-        s.sendline('yum list installed')      # run a command 
-        s.prompt()             # match the prompt
-        print(s.before)        # print everything before the prompt.
+        run_command(s, 'cat >/etc/yum/repos.d/IOSXR.repo <<\'EOF\' \n'
+                       '[IOSXR.repo]\n'
+                       'name=IOS XR Repository\n'
+                       'baseurl=https://devhub.cisco.com/artifactory/xr600/3rdparty/x86_64/\n'
+                       'enabled=1\n'
+                       'gpgcheck=0\n'
+                       'EOF')
+        run_command(s, 'yum list installed')
 
         #
         # Logout. We are done.
